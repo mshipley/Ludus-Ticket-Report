@@ -10,7 +10,8 @@ def generate_ticket_report(file):
     # Group by first and last name, count tickets, and list seat assignments
     aggregated_data = data.groupby(['First Name', 'Last Name']).agg(
         Tickets_Ordered=('Ticket I.D.', 'count'),
-        Seats=('Seat', lambda x: ', '.join(x.unique().astype(str)))
+        Seats=('Seat', lambda x: ', '.join(x.unique().astype(str))),
+        Notes=('Notes', lambda x: ', '.join(x.unique().astype(str)))
     ).reset_index()
     
     # Sort by last name
