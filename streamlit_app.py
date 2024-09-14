@@ -20,15 +20,8 @@ def generate_ticket_report(file):
 
 # Function to add word wrap for text in the PDF within a single row with proper borders
 def add_wrapped_cell(pdf, text, width, line_height, border):
-    words = text.split(' ')
-    line = ''
-    for word in words:
-        if pdf.get_string_width(line + word + ' ') > width:
-            pdf.cell(width, line_height, line, border=border, ln=True)  # Add border for wrapped line
-            line = word + ' '
-        else:
-            line += word + ' '
-    pdf.cell(width, line_height, line, border=border, ln=False)  # Add border for the last line
+
+    pdf.multiCell(width, line_height, text, border=border, ln=False)  # Add border for the last line
 
 # Function to generate a PDF with checkboxes for each patron
 def generate_pdf(report):
