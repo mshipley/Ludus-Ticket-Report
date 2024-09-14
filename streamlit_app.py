@@ -27,7 +27,7 @@ def add_wrapped_cell(pdf, text, width, line_height, border):
     if pdf.get_string_width(line) > width:
         pdf.multi_cell(width, line_height, text,border=1, align='L', fill=False,ln=False)  # Add border for the last line
     else:
-        pdf.cell(width, line_height, text, border=border, ln=False)  # Add border for the last line
+        pdf.cell(width, line_height, text, border=border, ln=True)  # Add border for the last line
 # Function to generate a PDF with checkboxes for each patron
 def generate_pdf(report):
     pdf = FPDF()
@@ -61,8 +61,7 @@ def generate_pdf(report):
         # Add seat assignment with word wrap within the same row and add proper borders
         add_wrapped_cell(pdf, row['Seats'], 100, 10, border=1)
         
-        # Move to the next line after filling the row
-        pdf.cell(0, 10, '', ln=True)
+    
     
     # Return the PDF as binary data
     return bytes(pdf.output(dest='S'))
