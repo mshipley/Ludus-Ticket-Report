@@ -25,7 +25,7 @@ def add_wrapped_cell(pdf, text, width, line_height, border):
     for word in words:
         line += word + ' '
     if pdf.get_string_width(line) > width:
-        pdf.multi_cell(width, line_height*2, text,1,0)  # Add border for the last line
+        pdf.multi_cell(width, line_height*2, text,border=1, align='L', fill=False)  # Add border for the last line
     else:
         pdf.cell(width, line_height, text, border=border, ln=False)  # Add border for the last line
 # Function to generate a PDF with checkboxes for each patron
