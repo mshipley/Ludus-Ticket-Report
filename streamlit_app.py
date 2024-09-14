@@ -9,7 +9,8 @@ COLOR_DEFAULT = (255, 255, 255)  # White for default
 def generate_ticket_report(file):
     # Read the uploaded CSV file
     data = pd.read_csv(file)
-    
+      # Filter rows where Status is "Paid"
+    data = data[data['Status'] == 'Paid']
     # Group by first and last name, count tickets, and list seat assignments
     aggregated_data = data.groupby(['First Name', 'Last Name']).agg(
         Tickets_Ordered=('Ticket I.D.', 'count'),
