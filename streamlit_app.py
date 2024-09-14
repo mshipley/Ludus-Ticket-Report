@@ -13,7 +13,23 @@ def generate_ticket_report(file):
         Seats=('Seat', lambda x: ', '.join(x.unique().astype(str)))
     ).reset_index()
     
+    # Sort by last name
+    aggregated_data = aggregated_data.sort_values(by=['Last Name', 'First Name'])
+    
     return aggregated_data
+
+# Function to add word wrap for text in the PDF
+def add_wrapped_cell(pdf, text, width, line_height):
+    # Split the text into lines that fit within the specified width
+    words = text.split(' ')
+    wrapped_text = ''
+    for word in words:
+        if pdf.get_string_width(wrapped_text + word + ' ') > width:
+            pdf.cell(width, line_height, wrapped_text, ln=True)
+            wrapped_text = word + ' '
+        else:
+            wrapped_text += word + ' '
+    pdf.cell(width, line_height, wrapped_text)
 
 # Function to generate a PDF with checkboxes for each patron
 def generate_pdf(report):
@@ -26,23 +42,30 @@ def generate_pdf(report):
     
     # Add column headers
     pdf.set_font('Arial', 'B', 12)
-    pdf.cell(40, 10, 'Patron Name', border=1)
-    pdf.cell(30, 10, 'Tickets', border=1)
-    pdf.cell(120, 10, 'Seats', border=1)
-    pdf.cell(0, 10, '', ln=True)  # Move to next line
+    pdf.cell(10, 10, '', border=0)  # For checkbox column
+    pdf.cell(60, 10, 'Last Name, First Name', border=1)
+    pdf.cell(20, 10, 'Tickets', border=1)
+    pdf.cell(100, 10, 'Seats', border=1)
+    pdf.cell(0, 10, '', ln=True)  # Move to the next line
     
-    # Add a line for each patron with checkboxes
+    # Add a line for each patron with checkboxes, word wrapping for seat numbers
     pdf.set_font('Arial', '', 12)
     for index, row in report.iterrows():
         # Add a checkbox for each patron
         pdf.cell(10, 10, '[ ]', border=0)  # Checkbox
         
-        # Add patron name, ticket count, and seats
-        name = f"{row['First Name']} {row['Last Name']}"
-        pdf.cell(40, 10, name, border=1)
-        pdf.cell(30, 10, str(row['Tickets_Ordered']), border=1)
-        pdf.cell(120, 10, row['Seats'], border=1)
-        pdf.cell(0, 10, '', ln=True)  # Move to next line
+        # Add patron name in "Last Name, First Name" format
+        name = f"{row['Last Name']}, {row['First Name']}"
+        pdf.cell(60, 10, name, border=1)
+        
+        # Add ticket count
+        pdf.cell(20, 10, str(row['Tickets_Ordered']), border=1)
+        
+        # Add seat assignment with word wrap
+        add_wrapped_cell(pdf, row['Seats'], 100, 10)
+        
+        # Move to the next line
+        pdf.cell(0, 10, '', ln=True)
     
     # Return the PDF as binary data
     return bytes(pdf.output(dest='S'))
@@ -89,7 +112,7 @@ if uploaded_file is not None:
             pdf = generate_pdf(report)
             st.download_button(
                 label="📥 Download Check-in List as PDF",
-                data=pdf,  # Passing bytearray directly
+                data=pdf,
                 file_name="Patron_Checkin_List.pdf",
                 mime="application/pdf"
             )
