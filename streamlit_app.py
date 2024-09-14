@@ -66,7 +66,7 @@ def generate_pdf(report):
         pdf.set_fill_color(*seat_color)
             
         # Add a checkbox for each patron
-        pdf.cell(10, 10, '[ ]', border=0  # Checkbox
+        pdf.cell(10, 10, '[ ]', border=0)  # Checkbox
         
         # Add patron name in "Last Name, First Name" format
         name = f"{row['Last Name']}, {row['First Name']}"
