@@ -45,7 +45,7 @@ def generate_pdf(report):
         pdf.cell(0, 10, '', ln=True)  # Move to next line
     
     # Return the PDF as binary data
-    return bytes(pdf.output(dest='S').encode('latin1'))
+    return bytes(pdf.output(dest='S'))
 
 # Streamlit app starts here
 st.title("🎟️ Ticket Order Aggregator with PDF Check-in List")
