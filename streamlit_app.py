@@ -2,6 +2,9 @@ import pandas as pd
 import streamlit as st
 from fpdf import FPDF
 
+COLOR_RIGHT = (173, 255, 47)  # Light green for "Right"
+COLOR_LEFT = (255, 215, 0)    # Gold for "Left"
+COLOR_DEFAULT = (255, 255, 255)  # White for default
 # Function to generate the ticket report
 def generate_ticket_report(file):
     # Read the uploaded CSV file
@@ -26,9 +29,9 @@ def add_wrapped_cell(pdf, text, width, line_height, border, ln):
     for word in words:
         line += word + ' '
     if pdf.get_string_width(line) > width:
-        pdf.multi_cell(width, line_height, text,border=1, align='L', fill=False,ln=ln)  # Add border for the last line
+        pdf.multi_cell(width, line_height, text,border=1, align='L', fill=True,ln=ln)  # Add border for the last line
     else:
-        pdf.cell(width, line_height, text, border=border, ln=ln)  # Add border for the last line
+        pdf.cell(width, line_height, text, border=border, ln=ln,fill=True)  # Add border for the last line
 # Function to generate a PDF with checkboxes for each patron
 def generate_pdf(report):
     pdf = FPDF()
@@ -49,8 +52,21 @@ def generate_pdf(report):
     # Add a line for each patron with checkboxes, word wrapping for seat numbers within row
     pdf.set_font('Arial', '', 12)
     for index, row in report.iterrows():
+        if index % 2 == 0:
+            pdf.set_fill_color(240, 240, 240)  # Light gray for alternating rows
+        else:
+            pdf.set_fill_color(255, 255, 255)  # White for alternating rows
+        
+        seat_color = COLOR_DEFAULT
+        if "Right" in row['Seats']:
+            seat_color = COLOR_RIGHT
+        elif "Left" in row['Seats']:
+            seat_color = COLOR_LEFT    
+
+        pdf.set_fill_color(*seat_color)
+            
         # Add a checkbox for each patron
-        pdf.cell(10, 10, '[ ]', border=0)  # Checkbox
+        pdf.cell(10, 10, '[ ]', border=0  # Checkbox
         
         # Add patron name in "Last Name, First Name" format
         name = f"{row['Last Name']}, {row['First Name']}"
