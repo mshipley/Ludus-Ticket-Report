@@ -18,6 +18,9 @@ def generate_ticket_report(file):
         Notes=('Notes', lambda x: ', '.join(x.dropna().unique().astype(str)))
     ).reset_index()
     aggregated_data['Notes'] = aggregated_data['Notes'].fillna('')
+
+    aggregated_data['First Name'] = aggregated_data['First Name'].str.replace('&amp;', '&')
+    aggregated_data['Last Name'] = aggregated_data['Last Name'].str.replace('&amp;', '&')
     # Sort by last name
     aggregated_data = aggregated_data.sort_values(by=['Last Name', 'First Name'])
     
