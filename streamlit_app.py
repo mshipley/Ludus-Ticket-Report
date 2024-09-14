@@ -1,151 +1,105 @@
-import streamlit as st
 import pandas as pd
-import math
-from pathlib import Path
+import streamlit as st
+from fpdf import FPDF
 
-# Set the title and favicon that appear in the Browser's tab bar.
-st.set_page_config(
-    page_title='GDP dashboard',
-    page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
-)
+# Function to generate the ticket report
+def generate_ticket_report(file):
+    # Read the uploaded CSV file
+    data = pd.read_csv(file)
+    
+    # Group by first and last name, count tickets, and list seat assignments
+    aggregated_data = data.groupby(['First Name', 'Last Name']).agg(
+        Tickets_Ordered=('Ticket I.D.', 'count'),
+        Seats=('Seat', lambda x: ', '.join(x.unique().astype(str)))
+    ).reset_index()
+    
+    return aggregated_data
 
-# -----------------------------------------------------------------------------
-# Declare some useful functions.
+# Function to generate a PDF with checkboxes for each patron
+def generate_pdf(report):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Add title
+    pdf.set_font('Arial', 'B', 16)
+    pdf.cell(200, 10, 'Patron Check-in List', ln=True, align='C')
+    
+    # Add column headers
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(40, 10, 'Patron Name', border=1)
+    pdf.cell(30, 10, 'Tickets', border=1)
+    pdf.cell(120, 10, 'Seats', border=1)
+    pdf.cell(0, 10, '', ln=True)  # Move to next line
+    
+    # Add a line for each patron with checkboxes
+    pdf.set_font('Arial', '', 12)
+    for index, row in report.iterrows():
+        # Add a checkbox for each patron
+        pdf.cell(10, 10, '[ ]', border=0)  # Checkbox
+        
+        # Add patron name, ticket count, and seats
+        name = f"{row['First Name']} {row['Last Name']}"
+        pdf.cell(40, 10, name, border=1)
+        pdf.cell(30, 10, str(row['Tickets_Ordered']), border=1)
+        pdf.cell(120, 10, row['Seats'], border=1)
+        pdf.cell(0, 10, '', ln=True)  # Move to next line
+    
+    return pdf
 
-@st.cache_data
-def get_gdp_data():
-    """Grab GDP data from a CSV file.
+# Streamlit app starts here
+st.title("🎟️ Ticket Order Aggregator with PDF Check-in List")
+st.write("""
+This app allows you to upload a CSV file containing ticket orders, 
+aggregate the data by name, and generate a PDF with a check-in list for patrons.
+""")
 
-    This uses caching to avoid having to read the file every time. If we were
-    reading from an HTTP endpoint instead of a file, it's a good idea to set
-    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
-    """
+# Sidebar for file upload
+st.sidebar.header("Upload your file here:")
+uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type="csv")
 
-    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-    DATA_FILENAME = Path(__file__).parent/'data/gdp_data.csv'
-    raw_gdp_df = pd.read_csv(DATA_FILENAME)
+# Display instructions if no file is uploaded
+if uploaded_file is None:
+    st.warning("Please upload a CSV file to start.")
 
-    MIN_YEAR = 1960
-    MAX_YEAR = 2022
-
-    # The data above has columns like:
-    # - Country Name
-    # - Country Code
-    # - [Stuff I don't care about]
-    # - GDP for 1960
-    # - GDP for 1961
-    # - GDP for 1962
-    # - ...
-    # - GDP for 2022
-    #
-    # ...but I want this instead:
-    # - Country Name
-    # - Country Code
-    # - Year
-    # - GDP
-    #
-    # So let's pivot all those year-columns into two: Year and GDP
-    gdp_df = raw_gdp_df.melt(
-        ['Country Code'],
-        [str(x) for x in range(MIN_YEAR, MAX_YEAR + 1)],
-        'Year',
-        'GDP',
-    )
-
-    # Convert years from string to integers
-    gdp_df['Year'] = pd.to_numeric(gdp_df['Year'])
-
-    return gdp_df
-
-gdp_df = get_gdp_data()
-
-# -----------------------------------------------------------------------------
-# Draw the actual page
-
-# Set the title that appears at the top of the page.
-'''
-# :earth_americas: GDP dashboard
-
-Browse GDP data from the [World Bank Open Data](https://data.worldbank.org/) website. As you'll
-notice, the data only goes to 2022 right now, and datapoints for certain years are often missing.
-But it's otherwise a great (and did I mention _free_?) source of data.
-'''
-
-# Add some spacing
-''
-''
-
-min_value = gdp_df['Year'].min()
-max_value = gdp_df['Year'].max()
-
-from_year, to_year = st.slider(
-    'Which years are you interested in?',
-    min_value=min_value,
-    max_value=max_value,
-    value=[min_value, max_value])
-
-countries = gdp_df['Country Code'].unique()
-
-if not len(countries):
-    st.warning("Select at least one country")
-
-selected_countries = st.multiselect(
-    'Which countries would you like to view?',
-    countries,
-    ['DEU', 'FRA', 'GBR', 'BRA', 'MEX', 'JPN'])
-
-''
-''
-''
-
-# Filter the data
-filtered_gdp_df = gdp_df[
-    (gdp_df['Country Code'].isin(selected_countries))
-    & (gdp_df['Year'] <= to_year)
-    & (from_year <= gdp_df['Year'])
-]
-
-st.header('GDP over time', divider='gray')
-
-''
-
-st.line_chart(
-    filtered_gdp_df,
-    x='Year',
-    y='GDP',
-    color='Country Code',
-)
-
-''
-''
-
-
-first_year = gdp_df[gdp_df['Year'] == from_year]
-last_year = gdp_df[gdp_df['Year'] == to_year]
-
-st.header(f'GDP in {to_year}', divider='gray')
-
-''
-
-cols = st.columns(4)
-
-for i, country in enumerate(selected_countries):
-    col = cols[i % len(cols)]
-
-    with col:
-        first_gdp = first_year[first_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-        last_gdp = last_year[last_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-
-        if math.isnan(first_gdp):
-            growth = 'n/a'
-            delta_color = 'off'
-        else:
-            growth = f'{last_gdp / first_gdp:,.2f}x'
-            delta_color = 'normal'
-
-        st.metric(
-            label=f'{country} GDP',
-            value=f'{last_gdp:,.0f}B',
-            delta=growth,
-            delta_color=delta_color
+# Main processing block when file is uploaded
+if uploaded_file is not None:
+    # Display the uploaded file name
+    st.sidebar.success(f"File uploaded: {uploaded_file.name}")
+    
+    # Call the processing function
+    try:
+        report = generate_ticket_report(uploaded_file)
+        
+        # Show the aggregated report as a table
+        st.write("### Aggregated Ticket Report:")
+        st.dataframe(report)
+        
+        # Add a button to allow users to download the aggregated report as CSV
+        csv = report.to_csv(index=False)
+        st.download_button(
+            label="📥 Download report as CSV",
+            data=csv,
+            file_name='Aggregated_Ticket_Report.csv',
+            mime='text/csv'
         )
+
+        # Generate and download the PDF
+        if st.button('📄 Generate PDF with Checkboxes'):
+            pdf = generate_pdf(report)
+            pdf_output = pdf.output(dest='S').encode('latin1')  # Get PDF as binary data
+            st.download_button(
+                label="📥 Download Check-in List as PDF",
+                data=pdf_output,
+                file_name="Patron_Checkin_List.pdf",
+                mime="application/pdf"
+            )
+        
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+
+# Footer information
+st.markdown("""
+---
+*Created with Streamlit*  
+If you encounter any issues, please contact support.
+""")
