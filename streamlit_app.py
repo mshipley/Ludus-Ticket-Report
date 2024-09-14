@@ -19,15 +19,15 @@ def generate_ticket_report(file):
     return aggregated_data
 
 # Function to add word wrap for text in the PDF within a single row with proper borders
-def add_wrapped_cell(pdf, text, width, line_height, border):
+def add_wrapped_cell(pdf, text, width, line_height, border, ln):
     words = text.split(' ')
     line = ''
     for word in words:
         line += word + ' '
     if pdf.get_string_width(line) > width:
-        pdf.multi_cell(width, line_height, text,border=1, align='L', fill=False,ln=True)  # Add border for the last line
+        pdf.multi_cell(width, line_height, text,border=1, align='L', fill=False,ln=ln)  # Add border for the last line
     else:
-        pdf.cell(width, line_height, text, border=border, ln=True)  # Add border for the last line
+        pdf.cell(width, line_height, text, border=border, ln=ln)  # Add border for the last line
 # Function to generate a PDF with checkboxes for each patron
 def generate_pdf(report):
     pdf = FPDF()
@@ -37,12 +37,12 @@ def generate_pdf(report):
     pdf.set_font('Arial', 'B', 16)
     pdf.cell(200, 10, 'Patron Check-in List', ln=True, align='C')
     
-    # Add column headers with borders
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(10, 10, '', border=0)  # For checkbox column
     pdf.cell(60, 10, 'Last Name, First Name', border=1)
     pdf.cell(20, 10, 'Tickets', border=1)
-    pdf.cell(100, 10, 'Seats', border=1)
+    pdf.cell(40, 10, 'Notes', border=1)  # Add Notes header
+    pdf.cell(70, 10, 'Seats', border=1)    
     pdf.cell(0, 10, '', ln=True)  # Move to the next line
     
     # Add a line for each patron with checkboxes, word wrapping for seat numbers within row
@@ -57,9 +57,9 @@ def generate_pdf(report):
         
         # Add ticket count
         pdf.cell(20, 10, str(row['Tickets_Ordered']), border=1)
-        
+        add_wrapped_cell(pdf, row['Notes'], 50, 10, border=1,ln=False)
         # Add seat assignment with word wrap within the same row and add proper borders
-        add_wrapped_cell(pdf, row['Seats'], 100, 10, border=1)
+        add_wrapped_cell(pdf, row['Seats'], 100, 10, border=1,ln=True)
         
     
     
