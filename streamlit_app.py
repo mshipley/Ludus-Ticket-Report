@@ -19,16 +19,17 @@ def generate_ticket_report(file):
     return aggregated_data
 
 # Function to add word wrap for text in the PDF within a single row
-def add_wrapped_cell_in_row(pdf, text, width, line_height):
+def add_wrapped_cell(pdf, text, width, line_height):
     words = text.split(' ')
-    wrapped_text = ''
+    line = ''
     for word in words:
-        if pdf.get_string_width(wrapped_text + word + ' ') > width:
-            pdf.cell(width, line_height, wrapped_text, ln=False)  # stay on same row
-            wrapped_text = word + ' '
+        if pdf.get_string_width(line + word + ' ') > width:
+            pdf.cell(width, line_height, line, ln=False)
+            pdf.ln(line_height)  # Move to next line within the cell
+            line = word + ' '
         else:
-            wrapped_text += word + ' '
-    pdf.cell(width, line_height, wrapped_text, ln=False)
+            line += word + ' '
+    pdf.cell(width, line_height, line, ln=False)
 
 # Function to generate a PDF with checkboxes for each patron
 def generate_pdf(report):
@@ -61,7 +62,7 @@ def generate_pdf(report):
         pdf.cell(20, 10, str(row['Tickets_Ordered']), border=1)
         
         # Add seat assignment with word wrap within same row
-        add_wrapped_cell_in_row(pdf, row['Seats'], 100, 10)
+        add_wrapped_cell(pdf, row['Seats'], 100, 10)
         
         # Move to the next line after filling the row
         pdf.cell(0, 10, '', ln=True)
