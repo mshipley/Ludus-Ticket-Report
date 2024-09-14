@@ -51,8 +51,9 @@ def generate_pdf(report):
     
     # Add a line for each patron with checkboxes, word wrapping for seat numbers within row
     pdf.set_font('Arial', '', 12)
+    i=0
     for index, row in report.iterrows():
-        if index % 2 == 0:
+        if i % 2 == 0:
             pdf.set_fill_color(240, 240, 240)  # Light gray for alternating rows
         else:
             pdf.set_fill_color(255, 255, 255)  # White for alternating rows
@@ -78,7 +79,7 @@ def generate_pdf(report):
         # Add seat assignment with word wrap within the same row and add proper borders
         pdf.set_fill_color(seat_color)
         add_wrapped_cell(pdf, row['Seats'], 70, 10, border=1,ln=True)
-        
+        i=i+1
     
     
     # Return the PDF as binary data
