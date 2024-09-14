@@ -63,19 +63,20 @@ def generate_pdf(report):
         elif "Left" in row['Seats']:
             seat_color = COLOR_LEFT    
 
-        pdf.set_fill_color(*seat_color)
+        
             
         # Add a checkbox for each patron
-        pdf.cell(10, 10, '[ ]', border=0)  # Checkbox
+        pdf.cell(10, 10, '[ ]', border=0,fill=True)  # Checkbox
         
         # Add patron name in "Last Name, First Name" format
         name = f"{row['Last Name']}, {row['First Name']}"
-        pdf.cell(60, 10, name, border=1)
+        pdf.cell(60, 10, name, border=1,fill=True)
         
         # Add ticket count
-        pdf.cell(20, 10, str(row['Tickets_Ordered']), border=1)
+        pdf.cell(20, 10, str(row['Tickets_Ordered']), border=1,fill=True)
         add_wrapped_cell(pdf, row['Notes'], 40, 10, border=1,ln=False)
         # Add seat assignment with word wrap within the same row and add proper borders
+        pdf.set_fill_color(seat_color)
         add_wrapped_cell(pdf, row['Seats'], 70, 10, border=1,ln=True)
         
     
