@@ -13,7 +13,7 @@ def generate_ticket_report(file):
         Seats=('Seat', lambda x: ', '.join(x.unique().astype(str))),
         Notes=('Notes', lambda x: ', '.join(x.unique().astype(str)))
     ).reset_index()
-    
+    aggregated_data['Notes'] = aggregated_data['Notes'].replace('nan', '')
     # Sort by last name
     aggregated_data = aggregated_data.sort_values(by=['Last Name', 'First Name'])
     
@@ -58,9 +58,9 @@ def generate_pdf(report):
         
         # Add ticket count
         pdf.cell(20, 10, str(row['Tickets_Ordered']), border=1)
-        add_wrapped_cell(pdf, row['Notes'], 50, 10, border=1,ln=False)
+        add_wrapped_cell(pdf, row['Notes'], 40, 10, border=1,ln=False)
         # Add seat assignment with word wrap within the same row and add proper borders
-        add_wrapped_cell(pdf, row['Seats'], 100, 10, border=1,ln=True)
+        add_wrapped_cell(pdf, row['Seats'], 70, 10, border=1,ln=True)
         
     
     
