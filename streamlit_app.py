@@ -11,9 +11,9 @@ def generate_ticket_report(file):
     aggregated_data = data.groupby(['First Name', 'Last Name']).agg(
         Tickets_Ordered=('Ticket I.D.', 'count'),
         Seats=('Seat', lambda x: ', '.join(x.unique().astype(str))),
-        Notes=('Notes', lambda x: ', '.join(x.unique().astype(str)))
+        Notes=('Notes', lambda x: ', '.join(x.dropna().unique().astype(str)))
     ).reset_index()
-    aggregated_data['Notes'] = aggregated_data['Notes'].replace('nan', '')
+    aggregated_data['Notes'] = aggregated_data['Notes'].fillna('')
     # Sort by last name
     aggregated_data = aggregated_data.sort_values(by=['Last Name', 'First Name'])
     
