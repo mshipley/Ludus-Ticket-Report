@@ -18,53 +18,47 @@ def generate_ticket_report(file):
     
     return aggregated_data
 
-# Function to add word wrap for text in the PDF within a single row with proper borders
-def add_wrapped_cell(pdf, text, width, line_height, border):
-    words = text.split(' ')
-    line = ''
-    for word in words:
-        if pdf.get_string_width(line + word + ' ') > width:
-            pdf.cell(width, line_height, line, border=border, ln=True)  # Add border for wrapped line
-            line = word + ' '
-        else:
-            line += word + ' '
-    pdf.cell(width, line_height, line, border=border, ln=False)  # Add border for the last line
+# Function to generate a PDF with checkboxes for each patron using MultiCell for seat wrapping
+class PDF(FPDF):
+    def header(self):
+        self.set_font('Arial', 'B', 16)
+        self.cell(200, 10, 'Patron Check-in List', ln=True, align='C')
 
-# Function to generate a PDF with checkboxes for each patron
+    def add_table_row(self, name, tickets, seats):
+        # Add checkbox
+        self.cell(10, 10, '[ ]', border=1, ln=False)
+        
+        # Add patron name (Last Name, First Name)
+        self.cell(60, 10, name, border=1, ln=False)
+        
+        # Add tickets ordered
+        self.cell(20, 10, str(tickets), border=1, ln=False)
+        
+        # Add seats with MultiCell for text wrapping
+        x, y = self.get_x(), self.get_y()  # Save the current position for MultiCell alignment
+        self.multi_cell(100, 10, seats, border=1)
+        self.set_xy(x + 100, y)  # Reset position to the end of MultiCell
+    
+# Function to generate the PDF document
 def generate_pdf(report):
-    pdf = FPDF()
+    pdf = PDF()
     pdf.add_page()
-    
-    # Add title
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(200, 10, 'Patron Check-in List', ln=True, align='C')
-    
-    # Add column headers with borders
+
+    # Add column headers
     pdf.set_font('Arial', 'B', 12)
-    pdf.cell(10, 10, '', border=0)  # For checkbox column
+    pdf.cell(10, 10, '', border=0)  # Checkbox column
     pdf.cell(60, 10, 'Last Name, First Name', border=1)
     pdf.cell(20, 10, 'Tickets', border=1)
     pdf.cell(100, 10, 'Seats', border=1)
-    pdf.cell(0, 10, '', ln=True)  # Move to the next line
-    
-    # Add a line for each patron with checkboxes, word wrapping for seat numbers within row
+    pdf.cell(0, 10, '', ln=True)  # End of header
+
+    # Add rows for each patron
     pdf.set_font('Arial', '', 12)
     for index, row in report.iterrows():
-        # Add a checkbox for each patron
-        pdf.cell(10, 10, '[ ]', border=0)  # Checkbox
-        
-        # Add patron name in "Last Name, First Name" format
         name = f"{row['Last Name']}, {row['First Name']}"
-        pdf.cell(60, 10, name, border=1)
-        
-        # Add ticket count
-        pdf.cell(20, 10, str(row['Tickets_Ordered']), border=1)
-        
-        # Add seat assignment with word wrap within the same row and add proper borders
-        add_wrapped_cell(pdf, row['Seats'], 100, 10, border=1)
-        
-        # Move to the next line after filling the row
-        pdf.cell(0, 10, '', ln=True)
+        tickets = row['Tickets_Ordered']
+        seats = row['Seats']
+        pdf.add_table_row(name, tickets, seats)
     
     # Return the PDF as binary data
     return bytes(pdf.output(dest='S'))
