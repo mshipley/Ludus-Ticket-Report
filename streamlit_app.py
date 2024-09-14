@@ -44,7 +44,8 @@ def generate_pdf(report):
         pdf.cell(120, 10, row['Seats'], border=1)
         pdf.cell(0, 10, '', ln=True)  # Move to next line
     
-    return pdf
+    # Return the PDF as a bytearray
+    return pdf.output(dest='S').encode('latin1')
 
 # Streamlit app starts here
 st.title("🎟️ Ticket Order Aggregator with PDF Check-in List")
@@ -86,10 +87,9 @@ if uploaded_file is not None:
         # Generate and download the PDF
         if st.button('📄 Generate PDF with Checkboxes'):
             pdf = generate_pdf(report)
-            pdf_output = pdf.output(dest='S').encode('latin1')  # Get PDF as binary data
             st.download_button(
                 label="📥 Download Check-in List as PDF",
-                data=pdf_output,
+                data=pdf,  # Passing bytearray directly
                 file_name="Patron_Checkin_List.pdf",
                 mime="application/pdf"
             )
